@@ -5,8 +5,7 @@ import requests
 app = Flask(__name__)
 
 # Apply CORS with explicit origins and methods
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, methods=["POST", "GET", "OPTIONS"])
-
+CORS(app, resources={r"/*": {"origins": "*"}}, methods=["POST", "GET", "OPTIONS"])
 
 # Home route
 @app.route('/')
