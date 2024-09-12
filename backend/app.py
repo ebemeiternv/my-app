@@ -3,7 +3,7 @@ from flask_cors import CORS
 import os
 import requests
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, static_folder='static/build', static_url_path='/')
 
 # Apply CORS to allow all origins
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["POST", "GET", "OPTIONS"])
