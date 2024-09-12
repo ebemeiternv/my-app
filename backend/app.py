@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import requests
 import os
+import requests
 
 app = Flask(__name__, static_folder='static/build')
 
@@ -17,25 +17,19 @@ def serve(path):
     else:
         return send_from_directory(app.static_folder, 'index.html')
 
-# Endpoint to get recipes from Spoonacular API
+# Recipe API route
 @app.route('/api/recipes', methods=['POST', 'OPTIONS'])
 def get_recipes():
     if request.method == 'OPTIONS':
-        # This handles the preflight OPTIONS request for CORS
         return jsonify({"message": "CORS preflight successful"}), 200
 
-    data = request.get_json()  # Get the ingredients list from the frontend
-    ingredients = ",".join(data['ingredients'])  # Join ingredients by comma
+    data = request.get_json()
+    ingredients = ",".join(data['ingredients'])
+    api_key = '6ff9812470314998a8db9f0087cbf3c2'
 
-    api_key = '6ff9812470314998a8db9f0087cbf3c2'  # Replace with your actual Spoonacular API key
-
-    # Construct the Spoonacular API URL
     url = f'https://api.spoonacular.com/recipes/findByIngredients?ingredients={ingredients}&apiKey={api_key}'
-
-    # Send a GET request to the Spoonacular API
     response = requests.get(url)
 
-    # Return the response back to the frontend
     return jsonify(response.json())
 
 if __name__ == '__main__':
