@@ -3,17 +3,16 @@ from flask_cors import CORS
 import os
 import requests
 
-# Define the Flask app and set the correct static folder
-app = Flask(__name__, static_folder=os.path.join('static', 'build'))
+app = Flask(__name__, static_folder='static')
 
 # Apply CORS to allow all origins
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["POST", "GET", "OPTIONS"])
 
-# Serve the React App (static files)
+# Serve React App
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
@@ -26,14 +25,15 @@ def get_recipes():
 
     data = request.get_json()
     ingredients = ",".join(data['ingredients'])
-    api_key = '6ff9812470314998a8db9f0087cbf3c2'
+    api_key = os.environ.get('SPOONACULAR_API_KEY')  # Use environment variable for the API key
 
-    # Query Spoonacular API with ingredients
+    if not api_key:
+        return jsonify({"error": "API key not set"}), 500
+
     url = f'https://api.spoonacular.com/recipes/findByIngredients?ingredients={ingredients}&apiKey={api_key}'
     response = requests.get(url)
 
     return jsonify(response.json())
 
-# Start the Flask app
 if __name__ == '__main__':
     app.run(debug=True)
