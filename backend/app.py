@@ -1,17 +1,21 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import requests
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static/build')
 
 # Apply CORS with explicit origins and methods
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["POST", "GET", "OPTIONS"])
 
-# Home route
-@app.route('/')
-def home():
-    return 'Welcome to the Recipe Recommendation App!'
-
+# Serve React App
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 # Endpoint to get recipes from Spoonacular API
 @app.route('/api/recipes', methods=['POST'])
@@ -33,27 +37,5 @@ def get_recipes():
     # Return the response back to the frontend
     return jsonify(response.json())
 
-
 if __name__ == '__main__':
     app.run(debug=True)
-
-from flask import Flask, send_from_directory
-from flask_cors import CORS
-
-app = Flask(__name__, static_folder='static/build')
-
-# Apply CORS
-CORS(app)
-
-# Serve React App
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    if path != "" and os.path.exists(app.static_folder + '/' + path):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
