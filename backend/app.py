@@ -33,6 +33,10 @@ def get_recipes():
 
     try:
         data = request.get_json()
+        if not data or 'ingredients' not in data:
+            logging.error("No ingredients provided")
+            return jsonify({"error": "No ingredients provided"}), 400
+
         ingredients = ",".join(data['ingredients'])
         api_key = os.environ.get('SPOONACULAR_API_KEY')  # Use environment variable for the API key
 
