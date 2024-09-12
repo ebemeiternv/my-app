@@ -13,6 +13,7 @@ CORS(app, resources={r"/*": {"origins": "*"}}, methods=["POST", "GET", "OPTIONS"
 # Set up logging to log errors for better debugging
 logging.basicConfig(level=logging.INFO)
 
+
 # Serve React App
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -24,9 +25,12 @@ def serve(path):
         logging.info("Serving index.html")
         return send_from_directory(app.static_folder, 'index.html')
 
+
 # Recipe API route
 @app.route('/api/recipes', methods=['POST', 'OPTIONS'])
 def get_recipes():
+    logging.info(f"Received request from {request.remote_addr}")  # <-- Add this line here
+
     if request.method == 'OPTIONS':
         logging.info("CORS preflight request handled")
         return jsonify({"message": "CORS preflight successful"}), 200
@@ -57,6 +61,7 @@ def get_recipes():
     except Exception as e:
         logging.error(f"Error processing recipe request: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
