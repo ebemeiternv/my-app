@@ -37,5 +37,7 @@ def get_recipes():
     # Return the response back to the frontend
     return jsonify(response.json())
 
+# Start the app using Heroku's assigned port
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Use Heroku's port or default to 5000
+    app.run(host='0.0.0.0', port=port, debug=False)
