@@ -27,7 +27,7 @@ def get_recipes():
     data = request.get_json()  # Get the ingredients list from the frontend
     ingredients = ",".join(data['ingredients'])  # Join ingredients by comma
 
-    api_key = 'your_spoonacular_api_key'  # Replace with your actual Spoonacular API key
+    api_key = '6ff9812470314998a8db9f0087cbf3c2'  # Replace with your actual Spoonacular API key
 
     # Construct the Spoonacular API URL
     url = f'https://api.spoonacular.com/recipes/findByIngredients?ingredients={ingredients}&apiKey={api_key}'
