@@ -3,11 +3,14 @@ import React, { useState } from 'react';
 function RecipeForm() {
   const [ingredients, setIngredients] = useState('');
   const [recipes, setRecipes] = useState([]);  // State to store recipe data
+  const [selectedRecipe, setSelectedRecipe] = useState(null); // State to store selected recipe details
   const [error, setError] = useState(null);    // State to handle any error
 
-  // Update this URL to point to your deployed Heroku app
-  const API_URL = 'https://salty-beach-40498.herokuapp.com/api/recipes';
+  const API_URL = 'https://salty-beach-40498-7894fddcd70e.herokuapp.com/api/recipes';
+  const SPOONACULAR_RECIPE_DETAILS_URL = 'https://api.spoonacular.com/recipes/';
+  const SPOONACULAR_API_KEY = '6ff9812470314998a8db9f0087cbf3c2';  // Your Spoonacular API key
 
+  // Function to handle fetching recipe by ingredients
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -27,9 +30,27 @@ function RecipeForm() {
       const data = await response.json();
       setRecipes(data);   // Update recipes state with received data
       setError(null);     // Clear error state if the request is successful
+      setSelectedRecipe(null); // Reset selected recipe when fetching new recipes
     } catch (err) {
       console.error('Error:', err);
-      setError('Failed to fetch recipes. Please try again.');  // Set error message
+      setError('Failed to fetch recipes. Please try again.');
+    }
+  };
+
+  // Function to handle fetching recipe details
+  const fetchRecipeDetails = async (id) => {
+    try {
+      const response = await fetch(`${SPOONACULAR_RECIPE_DETAILS_URL}${id}/information?apiKey=${SPOONACULAR_API_KEY}`);
+
+      if (!response.ok) {
+        throw new Error('Error fetching recipe details');
+      }
+
+      const recipeDetails = await response.json();
+      setSelectedRecipe(recipeDetails);  // Update selected recipe state
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Failed to fetch recipe details.');
     }
   };
 
@@ -51,7 +72,7 @@ function RecipeForm() {
         {recipes.length > 0 ? (
           <ul>
             {recipes.map((recipe) => (
-              <li key={recipe.id}>
+              <li key={recipe.id} onClick={() => fetchRecipeDetails(recipe.id)}>
                 <h3>{recipe.title}</h3>
                 <img src={recipe.image} alt={recipe.title} />
                 <p>Likes: {recipe.likes}</p>
@@ -60,6 +81,14 @@ function RecipeForm() {
           </ul>
         ) : (
           <p>No recipes yet. Submit ingredients to get results!</p>
+        )}
+
+        {selectedRecipe && (
+          <div>
+            <h2>{selectedRecipe.title}</h2>
+            <img src={selectedRecipe.image} alt={selectedRecipe.title} />
+            <p>{selectedRecipe.instructions}</p>
+          </div>
         )}
       </div>
     </div>
