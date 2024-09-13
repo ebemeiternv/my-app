@@ -2,24 +2,25 @@ import React, { useState } from 'react';
 
 function RecipeForm() {
   const [ingredients, setIngredients] = useState('');
-  const [recipes, setRecipes] = useState([]);
-  const [selectedRecipe, setSelectedRecipe] = useState(null);
-  const [error, setError] = useState(null);
+  const [recipes, setRecipes] = useState([]);  // State to store recipe data
+  const [selectedRecipe, setSelectedRecipe] = useState(null); // State to store selected recipe details
+  const [error, setError] = useState(null);    // State to handle any error
 
   const API_URL = 'https://salty-beach-40498-7894fddcd70e.herokuapp.com/api/recipes';
   const SPOONACULAR_RECIPE_DETAILS_URL = 'https://api.spoonacular.com/recipes/';
-  const API_KEY = '6ff9812470314998a8db9f0087cbf3c2';  // Your Spoonacular API key
+  const SPOONACULAR_API_KEY = '6ff9812470314998a8db9f0087cbf3c2'; // Your API key
 
-  // Fetch recipes based on ingredients
+  // Function to handle fetching recipe by ingredients
   const handleSubmit = async (event) => {
     event.preventDefault();
+
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ingredients: ingredients.split(',') }),
+        body: JSON.stringify({ ingredients: ingredients.split(',') }), // Send ingredients as array
       });
 
       if (!response.ok) {
@@ -27,34 +28,32 @@ function RecipeForm() {
       }
 
       const data = await response.json();
-      setRecipes(data);
-      setError(null);
-      setSelectedRecipe(null); // Reset the selected recipe when fetching new recipes
+      setRecipes(data);   // Update recipes state with received data
+      setError(null);     // Clear error state if the request is successful
+      setSelectedRecipe(null); // Reset selected recipe when fetching new recipes
+      console.log('Recipes fetched:', data); // Debugging log
     } catch (err) {
       console.error('Error:', err);
       setError('Failed to fetch recipes. Please try again.');
     }
   };
 
-  // Fetch details of a selected recipe
+  // Function to handle fetching recipe details
   const fetchRecipeDetails = async (id) => {
+    console.log(`Fetching details for recipe ID: ${id}`); // Debugging log
+
     try {
-      const response = await fetch(`${SPOONACULAR_RECIPE_DETAILS_URL}${id}/information?apiKey=${API_KEY}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        mode: 'cors',
-      });
+      const response = await fetch(`${SPOONACULAR_RECIPE_DETAILS_URL}${id}/information?apiKey=${SPOONACULAR_API_KEY}`);
 
       if (!response.ok) {
         throw new Error('Error fetching recipe details');
       }
 
       const recipeDetails = await response.json();
-      console.log('Recipe details:', recipeDetails);  // Debugging to check if details are fetched
-      setSelectedRecipe(recipeDetails);
+      setSelectedRecipe(recipeDetails);  // Update selected recipe state
+      console.log('Recipe details fetched:', recipeDetails); // Debugging log
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error fetching recipe details:', err);
       setError('Failed to fetch recipe details.');
     }
   };
@@ -67,6 +66,7 @@ function RecipeForm() {
           placeholder="Enter ingredients separated by commas"
           value={ingredients}
           onChange={(e) => setIngredients(e.target.value)}
+          id="ingredient-input"  // Added an ID attribute to avoid the autofill warning
         />
         <button type="submit">Get Recipes</button>
       </form>
@@ -77,7 +77,10 @@ function RecipeForm() {
         {recipes.length > 0 ? (
           <ul>
             {recipes.map((recipe) => (
-              <li key={recipe.id} onClick={() => fetchRecipeDetails(recipe.id)}>
+              <li key={recipe.id} onClick={() => {
+                console.log(`Recipe clicked: ${recipe.id}`);
+                fetchRecipeDetails(recipe.id);
+              }}>
                 <h3>{recipe.title}</h3>
                 <img src={recipe.image} alt={recipe.title} />
                 <p>Likes: {recipe.likes}</p>
