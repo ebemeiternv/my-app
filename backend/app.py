@@ -4,7 +4,7 @@ import os
 import requests
 import logging
 
-# Initialize the Flask app and set up static folder
+# Initialize the Flask app and set up the static folder
 app = Flask(__name__, static_folder='static/build', static_url_path='/')
 
 # Apply CORS to allow all origins and all methods (GET, POST, OPTIONS)
@@ -12,7 +12,6 @@ CORS(app, resources={r"/*": {"origins": "*"}}, methods=["POST", "GET", "OPTIONS"
 
 # Set up logging to log errors for better debugging
 logging.basicConfig(level=logging.INFO)
-
 
 # Serve React App
 @app.route('/', defaults={'path': ''})
@@ -25,22 +24,23 @@ def serve(path):
         logging.info("Serving index.html")
         return send_from_directory(app.static_folder, 'index.html')
 
-
 # Recipe API route
 @app.route('/api/recipes', methods=['POST', 'OPTIONS'])
 def get_recipes():
-    logging.info(f"Received request from {request.remote_addr}")  # <-- Add this line here
+    logging.info(f"Received request from {request.remote_addr}")  # Log the request IP address
 
     if request.method == 'OPTIONS':
         logging.info("CORS preflight request handled")
         return jsonify({"message": "CORS preflight successful"}), 200
 
     try:
+        # Parse JSON data from the request
         data = request.get_json()
         if not data or 'ingredients' not in data:
             logging.error("No ingredients provided")
             return jsonify({"error": "No ingredients provided"}), 400
 
+        # Extract ingredients and build the Spoonacular API request
         ingredients = ",".join(data['ingredients'])
         api_key = os.environ.get('SPOONACULAR_API_KEY')  # Use environment variable for the API key
 
@@ -52,10 +52,12 @@ def get_recipes():
         logging.info(f"Fetching recipes for ingredients: {ingredients}")
         response = requests.get(url)
 
+        # Handle response from Spoonacular API
         if response.status_code != 200:
             logging.error(f"Failed to fetch recipes: {response.status_code}, {response.text}")
             return jsonify({"error": "Failed to fetch recipes"}), response.status_code
 
+        logging.info("Recipes successfully fetched")
         return jsonify(response.json())
 
     except Exception as e:
@@ -65,3 +67,4 @@ def get_recipes():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
