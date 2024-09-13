@@ -6,9 +6,8 @@ function RecipeForm() {
   const [selectedRecipe, setSelectedRecipe] = useState(null); // State to store selected recipe details
   const [error, setError] = useState(null);    // State to handle any error
 
-  const API_URL = 'https://salty-beach-40498-7894fddcd70e.herokuapp.com/api/recipes';
-  const SPOONACULAR_RECIPE_DETAILS_URL = 'https://api.spoonacular.com/recipes/';
-  const SPOONACULAR_API_KEY = '6ff9812470314998a8db9f0087cbf3c2';  // Your Spoonacular API key
+  const API_URL = 'https://salty-beach-40498-7894fddcd70e.herokuapp.com/api/recipes'; // Flask API URL
+  const RECIPE_DETAILS_API_URL = 'https://salty-beach-40498-7894fddcd70e.herokuapp.com/api/recipe-details'; // New route to fetch recipe details
 
   // Function to handle fetching recipe by ingredients
   const handleSubmit = async (event) => {
@@ -37,10 +36,10 @@ function RecipeForm() {
     }
   };
 
-  // Function to handle fetching recipe details
+  // Function to handle fetching recipe details via Flask backend
   const fetchRecipeDetails = async (id) => {
     try {
-      const response = await fetch(`${SPOONACULAR_RECIPE_DETAILS_URL}${id}/information?apiKey=${SPOONACULAR_API_KEY}`);
+      const response = await fetch(`${RECIPE_DETAILS_API_URL}/${id}`);
 
       if (!response.ok) {
         throw new Error('Error fetching recipe details');
