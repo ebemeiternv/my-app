@@ -88,7 +88,11 @@ function RecipeForm() {
                 fetchRecipeDetails(recipe.id);
               }}>
                 <h3>{recipe.title}</h3>
-                <img src={recipe.image} alt={recipe.title} />
+                <img
+                  src={recipe.image}
+                  alt={recipe.title}
+                  crossOrigin="anonymous"  // Adding crossOrigin to prevent CORB issues
+                />
                 <p>Likes: {recipe.likes}</p>
               </li>
             ))}
