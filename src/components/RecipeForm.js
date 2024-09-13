@@ -43,7 +43,13 @@ function RecipeForm() {
     console.log(`Fetching details for recipe ID: ${id}`); // Debugging log
 
     try {
-      const response = await fetch(`${SPOONACULAR_RECIPE_DETAILS_URL}${id}/information?apiKey=${SPOONACULAR_API_KEY}`);
+      const response = await fetch(`${SPOONACULAR_RECIPE_DETAILS_URL}${id}/information?apiKey=${SPOONACULAR_API_KEY}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors'  // Adding CORS support explicitly
+      });
 
       if (!response.ok) {
         throw new Error('Error fetching recipe details');
