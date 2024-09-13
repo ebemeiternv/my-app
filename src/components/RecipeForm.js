@@ -52,15 +52,17 @@ function RecipeForm() {
       });
 
       if (!response.ok) {
-        throw new Error('Error fetching recipe details');
+        throw new Error(`Error fetching recipe details for ID ${id}`);
       }
 
       const recipeDetails = await response.json();
+      console.log('Recipe details fetched:', recipeDetails); // Log fetched details
+
       setSelectedRecipe(recipeDetails);  // Update selected recipe state
-      console.log('Recipe details fetched:', recipeDetails); // Debugging log
+      console.log('Selected recipe state updated:', recipeDetails); // Debugging log
     } catch (err) {
       console.error('Error fetching recipe details:', err);
-      setError('Failed to fetch recipe details.');
+      setError(`Failed to fetch recipe details for ID ${id}`);
     }
   };
 
@@ -101,11 +103,18 @@ function RecipeForm() {
           <p>No recipes yet. Submit ingredients to get results!</p>
         )}
 
+        {/* Render selected recipe details */}
         {selectedRecipe && (
           <div>
             <h2>{selectedRecipe.title}</h2>
             <img src={selectedRecipe.image} alt={selectedRecipe.title} />
-            <p>{selectedRecipe.instructions}</p>
+            <p><strong>Ingredients:</strong></p>
+            <ul>
+              {selectedRecipe.extendedIngredients?.map((ingredient) => (
+                <li key={ingredient.id}>{ingredient.original}</li>
+              ))}
+            </ul>
+            <p><strong>Instructions:</strong> {selectedRecipe.instructions}</p>
           </div>
         )}
       </div>
