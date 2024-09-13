@@ -6,7 +6,7 @@ function RecipeForm() {
   const [error, setError] = useState(null);    // State to handle any error
 
   // Update this URL to point to your deployed Heroku app
-  const API_URL = 'https://salty-beach-40498-7894fddcd70e.herokuapp.com/api/recipes';
+  const API_URL = 'https://salty-beach-40498.herokuapp.com/api/recipes';
 
   const handleSubmit = async (event) => {
     event.preventDefault();
