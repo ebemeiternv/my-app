@@ -1,8 +1,13 @@
+HEAD
 from flask import Flask, request, jsonify, send_from_directory
+
+from flask import Flask, request, jsonify, send_from_directory, make_response, send_file
+80eeb56 (Updated RecipeForm and API integration for Heroku deployment)
 from flask_cors import CORS
 import os
 import requests
 import logging
+from io import BytesIO
 
 # Initialize the Flask app and set up the static folder
 app = Flask(__name__, static_folder='static/build', static_url_path='/')
@@ -62,6 +67,28 @@ def get_recipes():
 
     except Exception as e:
         logging.error(f"Error processing recipe request: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+# Proxy route to fetch images from Spoonacular (to handle CORS issues)
+@app.route('/api/proxy_image', methods=['GET'])
+def proxy_image():
+    image_url = request.args.get('url')
+    if not image_url:
+        logging.error("No image URL provided")
+        return jsonify({"error": "No image URL provided"}), 400
+
+    try:
+        logging.info(f"Fetching image from: {image_url}")
+        response = requests.get(image_url)
+        if response.status_code != 200:
+            logging.error(f"Failed to fetch image: {response.status_code}")
+            return jsonify({"error": "Failed to fetch image"}), response.status_code
+
+        img = BytesIO(response.content)
+        return send_file(img, mimetype='image/jpeg')  # Assuming the image is in JPEG format
+    except Exception as e:
+        logging.error(f"Error fetching image: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
 
