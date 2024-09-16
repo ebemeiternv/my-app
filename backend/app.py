@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, make_response, send_file
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 import os
 import requests
@@ -14,6 +14,7 @@ CORS(app, resources={r"/*": {"origins": "*"}}, methods=["POST", "GET", "OPTIONS"
 # Set up logging to log errors for better debugging
 logging.basicConfig(level=logging.INFO)
 
+
 # Serve React App
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -24,6 +25,7 @@ def serve(path):
     else:
         logging.info("Serving index.html")
         return send_from_directory(app.static_folder, 'index.html')
+
 
 # Recipe API route
 @app.route('/api/recipes', methods=['POST', 'OPTIONS'])
@@ -68,6 +70,7 @@ def get_recipes():
         logging.error(f"Error processing recipe request: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+
 # Proxy route to fetch images from Spoonacular (to handle CORS and CORB issues)
 @app.route('/api/proxy_image', methods=['GET'])
 def proxy_image():
@@ -95,6 +98,7 @@ def proxy_image():
         logging.error(f"Error fetching image: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+
 # New route to fetch recipe details using Spoonacular API
 @app.route('/api/recipe_details/<int:recipe_id>', methods=['GET'])
 def get_recipe_details(recipe_id):
@@ -120,6 +124,7 @@ def get_recipe_details(recipe_id):
     except Exception as e:
         logging.error(f"Error fetching recipe details: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
