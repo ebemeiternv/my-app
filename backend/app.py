@@ -1,8 +1,4 @@
-HEAD
-from flask import Flask, request, jsonify, send_from_directory
-
 from flask import Flask, request, jsonify, send_from_directory, make_response, send_file
-80eeb56 (Updated RecipeForm and API integration for Heroku deployment)
 from flask_cors import CORS
 import os
 import requests
