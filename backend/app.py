@@ -87,7 +87,11 @@ def proxy_image():
             return jsonify({"error": "Failed to fetch image"}), response.status_code
 
         img = BytesIO(response.content)
-        return send_file(img, mimetype='image/jpeg')  # Assuming the image is in JPEG format
+        headers = {
+            'Access-Control-Allow-Origin': '*',  # Allow requests from any origin
+            'Content-Type': 'image/jpeg'  # Set correct content type
+        }
+        return send_file(img, mimetype='image/jpeg', headers=headers)
     except Exception as e:
         logging.error(f"Error fetching image: {e}")
         return jsonify({"error": "Internal server error"}), 500
