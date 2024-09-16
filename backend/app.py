@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, send_file
+from flask import Flask, request, jsonify, send_from_directory, make_response, send_file
 from flask_cors import CORS
 import os
 import requests
@@ -87,13 +87,14 @@ def proxy_image():
             return jsonify({"error": "Failed to fetch image"}), response.status_code
 
         img = BytesIO(response.content)
-        headers = {
-            'Access-Control-Allow-Origin': '*',  # Allow requests from any origin
-            'Content-Type': response.headers['Content-Type'],  # Use the original content type
-            'Cross-Origin-Resource-Policy': 'cross-origin',  # Allow cross-origin resource policy
-            'X-Content-Type-Options': 'nosniff'  # Prevent MIME-type sniffing by browsers
-        }
-        return send_file(img, mimetype=response.headers['Content-Type'], headers=headers)
+        # Create the response with send_file
+        file_response = make_response(send_file(img, mimetype=response.headers['Content-Type']))
+        # Set the headers separately
+        file_response.headers['Access-Control-Allow-Origin'] = '*'
+        file_response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
+        file_response.headers['X-Content-Type-Options'] = 'nosniff'
+
+        return file_response
     except Exception as e:
         logging.error(f"Error fetching image: {e}")
         return jsonify({"error": "Internal server error"}), 500
