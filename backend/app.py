@@ -14,6 +14,7 @@ CORS(app, resources={r"/*": {"origins": "*"}}, methods=["POST", "GET", "OPTIONS"
 # Set up logging to log errors for better debugging
 logging.basicConfig(level=logging.INFO)
 
+
 # Serve React App
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -24,6 +25,7 @@ def serve(path):
     else:
         logging.info("Serving index.html")
         return send_from_directory(app.static_folder, 'index.html')
+
 
 # Recipe API route
 @app.route('/api/recipes', methods=['POST', 'OPTIONS'])
@@ -44,6 +46,9 @@ def get_recipes():
         # Extract ingredients and build the Spoonacular API request
         ingredients = ",".join(data['ingredients'])
         api_key = os.environ.get('SPOONACULAR_API_KEY')  # Use environment variable for the API key
+
+        # Log the API key to check if it's correctly loaded
+        logging.info(f"API Key: {api_key}")
 
         if not api_key:
             logging.error("API key not set")
@@ -85,6 +90,33 @@ def proxy_image():
         return send_file(img, mimetype='image/jpeg')  # Assuming the image is in JPEG format
     except Exception as e:
         logging.error(f"Error fetching image: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+# New route to fetch recipe details using Spoonacular API
+@app.route('/api/recipe_details/<int:recipe_id>', methods=['GET'])
+def get_recipe_details(recipe_id):
+    api_key = os.environ.get('SPOONACULAR_API_KEY')  # Use environment variable for the API key
+
+    # Log the API key to check if it's correctly loaded
+    logging.info(f"API Key: {api_key}")
+
+    if not api_key:
+        logging.error("API key not set")
+        return jsonify({"error": "API key not set"}), 500
+
+    url = f'https://api.spoonacular.com/recipes/{recipe_id}/information?apiKey={api_key}'
+    logging.info(f"Fetching recipe details for recipe ID: {recipe_id}")
+    try:
+        response = requests.get(url)
+        if response.status_code != 200:
+            logging.error(f"Failed to fetch recipe details: {response.status_code}, {response.text}")
+            return jsonify({"error": "Failed to fetch recipe details"}), response.status_code
+
+        logging.info("Recipe details successfully fetched")
+        return jsonify(response.json())
+    except Exception as e:
+        logging.error(f"Error fetching recipe details: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
 
