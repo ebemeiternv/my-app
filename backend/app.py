@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, make_response, send_file
+from flask import Flask, request, jsonify, send_from_directory, make_response, send_file, redirect
 from flask_cors import CORS
 import os
 import requests
@@ -8,11 +8,18 @@ from io import BytesIO
 # Initialize the Flask app and set up the static folder
 app = Flask(__name__, static_folder='static/build', static_url_path='/')
 
-# Apply CORS to allow all origins and all methods (GET, POST, OPTIONS)
-CORS(app, resources={r"/*": {"origins": "*"}}, methods=["POST", "GET", "OPTIONS"])
+# Apply CORS to allow only requests from the Heroku domain
+CORS(app, resources={r"/*": {"origins": "https://salty-beach-40498-7894fddcd70e.herokuapp.com"}})
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG if app.debug else logging.INFO)
+
+# Force HTTPS redirection to ensure secure environment
+@app.before_request
+def before_request():
+    if not request.is_secure:
+        url = request.url.replace("http://", "https://", 1)
+        return redirect(url, code=301)
 
 # Serve React App
 @app.route('/', defaults={'path': ''})
@@ -24,7 +31,6 @@ def serve(path):
     else:
         logging.info("Serving index.html")
         return send_from_directory(app.static_folder, 'index.html')
-
 
 # Recipe API route
 @app.route('/api/recipes', methods=['POST', 'OPTIONS'])
@@ -68,7 +74,6 @@ def get_recipes():
         logging.error(f"Error processing recipe request: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
-
 # Proxy route to fetch images from Spoonacular (to handle CORS and CORB issues)
 @app.route('/api/proxy_image', methods=['GET'])
 def proxy_image():
@@ -86,6 +91,7 @@ def proxy_image():
 
         img = BytesIO(response.content)
         file_response = make_response(send_file(img, mimetype=response.headers['Content-Type']))
+        # Set headers to allow cross-origin access
         file_response.headers['Access-Control-Allow-Origin'] = '*'
         file_response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
         file_response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -97,7 +103,6 @@ def proxy_image():
     except Exception as e:
         logging.error(f"Error fetching image: {e}")
         return jsonify({"error": "Internal server error"}), 500
-
 
 # New route to fetch recipe details using Spoonacular API
 @app.route('/api/recipe_details/<int:recipe_id>', methods=['GET'])
