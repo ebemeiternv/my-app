@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, make_response, send_file, redirect
+from flask import Flask, request, jsonify, send_from_directory, make_response, send_file
 from flask_cors import CORS
 import os
 import requests
@@ -8,18 +8,11 @@ from io import BytesIO
 # Initialize the Flask app and set up the static folder
 app = Flask(__name__, static_folder='static/build', static_url_path='/')
 
-# Apply CORS to allow only requests from the Heroku domain
-CORS(app, resources={r"/*": {"origins": "https://salty-beach-40498-7894fddcd70e.herokuapp.com"}})
+# Apply CORS to allow localhost:3000 and Heroku domain
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://salty-beach-40498-7894fddcd70e.herokuapp.com"]}})
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG if app.debug else logging.INFO)
-
-# Force HTTPS redirection to ensure secure environment
-@app.before_request
-def before_request():
-    if not request.is_secure:
-        url = request.url.replace("http://", "https://", 1)
-        return redirect(url, code=301)
+# Set up logging to log errors for better debugging
+logging.basicConfig(level=logging.INFO)
 
 # Serve React App
 @app.route('/', defaults={'path': ''})
@@ -32,25 +25,34 @@ def serve(path):
         logging.info("Serving index.html")
         return send_from_directory(app.static_folder, 'index.html')
 
+
 # Recipe API route
 @app.route('/api/recipes', methods=['POST', 'OPTIONS'])
 def get_recipes():
-    logging.info(f"Received request from {request.remote_addr}")
-
     if request.method == 'OPTIONS':
-        logging.info("CORS preflight request handled")
-        return jsonify({"message": "CORS preflight successful"}), 200
+        # Handle preflight CORS request
+        response = make_response()
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        return response, 200
+
+    logging.info(f"Received request from {request.remote_addr}")  # Log the request IP address
 
     try:
+        # Parse JSON data from the request
         data = request.get_json()
         if not data or 'ingredients' not in data:
             logging.error("No ingredients provided")
             return jsonify({"error": "No ingredients provided"}), 400
 
+        # Extract ingredients and build the Spoonacular API request
         ingredients = ",".join(data['ingredients'])
-        api_key = os.environ.get('SPOONACULAR_API_KEY')
+        api_key = os.environ.get('SPOONACULAR_API_KEY')  # Use environment variable for the API key
 
+        # Log the API key to check if it's correctly loaded
         logging.info(f"API Key: {api_key}")
+
         if not api_key:
             logging.error("API key not set")
             return jsonify({"error": "API key not set"}), 500
@@ -59,12 +61,9 @@ def get_recipes():
         logging.info(f"Fetching recipes for ingredients: {ingredients}")
         response = requests.get(url)
 
+        # Handle response from Spoonacular API
         if response.status_code != 200:
-            try:
-                error_data = response.json()
-            except ValueError:
-                error_data = response.text
-            logging.error(f"Failed to fetch recipes: {response.status_code}, {error_data}")
+            logging.error(f"Failed to fetch recipes: {response.status_code}, {response.text}")
             return jsonify({"error": "Failed to fetch recipes"}), response.status_code
 
         logging.info("Recipes successfully fetched")
@@ -73,6 +72,7 @@ def get_recipes():
     except Exception as e:
         logging.error(f"Error processing recipe request: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
 
 # Proxy route to fetch images from Spoonacular (to handle CORS and CORB issues)
 @app.route('/api/proxy_image', methods=['GET'])
@@ -84,31 +84,29 @@ def proxy_image():
 
     try:
         logging.info(f"Fetching image from: {image_url}")
-        response = requests.get(image_url, timeout=10)  # Added a timeout for robustness
+        response = requests.get(image_url)
         if response.status_code != 200:
             logging.error(f"Failed to fetch image: {response.status_code}")
             return jsonify({"error": "Failed to fetch image"}), response.status_code
 
         img = BytesIO(response.content)
+        # Create the response with send_file
         file_response = make_response(send_file(img, mimetype=response.headers['Content-Type']))
-        # Set headers to allow cross-origin access
+        # Set the headers separately
         file_response.headers['Access-Control-Allow-Origin'] = '*'
         file_response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
         file_response.headers['X-Content-Type-Options'] = 'nosniff'
 
         return file_response
-    except requests.Timeout:
-        logging.error(f"Timeout while fetching image: {image_url}")
-        return jsonify({"error": "Request timed out"}), 504
     except Exception as e:
         logging.error(f"Error fetching image: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+
 # New route to fetch recipe details using Spoonacular API
 @app.route('/api/recipe_details/<int:recipe_id>', methods=['GET'])
 def get_recipe_details(recipe_id):
-    api_key = os.environ.get('SPOONACULAR_API_KEY')
-    logging.info(f"API Key: {api_key}")
+    api_key = os.environ.get('SPOONACULAR_API_KEY')  # Use environment variable for the API key
 
     if not api_key:
         logging.error("API key not set")
@@ -118,18 +116,12 @@ def get_recipe_details(recipe_id):
     logging.info(f"Fetching recipe details for recipe ID: {recipe_id}")
     try:
         response = requests.get(url)
-
         if response.status_code != 200:
-            try:
-                error_data = response.json()
-            except ValueError:
-                error_data = response.text
-            logging.error(f"Failed to fetch recipe details: {response.status_code}, {error_data}")
+            logging.error(f"Failed to fetch recipe details: {response.status_code}, {response.text}")
             return jsonify({"error": "Failed to fetch recipe details"}), response.status_code
 
         logging.info("Recipe details successfully fetched")
         return jsonify(response.json())
-
     except Exception as e:
         logging.error(f"Error fetching recipe details: {e}")
         return jsonify({"error": "Internal server error"}), 500
