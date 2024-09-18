@@ -8,8 +8,8 @@ from io import BytesIO
 # Initialize the Flask app and set up the static folder
 app = Flask(__name__, static_folder='static/build', static_url_path='/')
 
-# Apply CORS to allow localhost:3000 and Heroku domain
-CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://salty-beach-40498-7894fddcd70e.herokuapp.com"]}})
+# Apply CORS to allow localhost:3000 and Heroku domain for main routes
+CORS(app, resources={r"/*": {"origins": ["https://salty-beach-40498-7894fddcd70e.herokuapp.com", "http://localhost:3000"]}})
 
 # Set up logging to log errors for better debugging
 logging.basicConfig(level=logging.INFO)
@@ -50,9 +50,6 @@ def get_recipes():
         ingredients = ",".join(data['ingredients'])
         api_key = os.environ.get('SPOONACULAR_API_KEY')  # Use environment variable for the API key
 
-        # Log the API key to check if it's correctly loaded
-        logging.info(f"API Key: {api_key}")
-
         if not api_key:
             logging.error("API key not set")
             return jsonify({"error": "API key not set"}), 500
@@ -61,7 +58,6 @@ def get_recipes():
         logging.info(f"Fetching recipes for ingredients: {ingredients}")
         response = requests.get(url)
 
-        # Handle response from Spoonacular API
         if response.status_code != 200:
             logging.error(f"Failed to fetch recipes: {response.status_code}, {response.text}")
             return jsonify({"error": "Failed to fetch recipes"}), response.status_code
@@ -84,20 +80,17 @@ def proxy_image():
 
     try:
         logging.info(f"Fetching image from: {image_url}")
-        response = requests.get(image_url)
+        headers = {"User-Agent": "Mozilla/5.0"}  # Mimic a browser request
+        response = requests.get(image_url, headers=headers)
         if response.status_code != 200:
             logging.error(f"Failed to fetch image: {response.status_code}")
-            return jsonify({"error": "Failed to fetch image"}), response.status_code
+            return jsonify({"error": f"Failed to fetch image: {response.status_code}"}), response.status_code
 
         img = BytesIO(response.content)
-        # Create the response with send_file
         file_response = make_response(send_file(img, mimetype=response.headers['Content-Type']))
-        # Set the headers separately
         file_response.headers['Access-Control-Allow-Origin'] = '*'
-        file_response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
-        file_response.headers['X-Content-Type-Options'] = 'nosniff'
-
         return file_response
+
     except Exception as e:
         logging.error(f"Error fetching image: {e}")
         return jsonify({"error": "Internal server error"}), 500
