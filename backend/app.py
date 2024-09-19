@@ -5,16 +5,16 @@ import requests
 import logging
 from io import BytesIO
 
-# Initialize the Flask app and set up the static folder
+# Initialize the Flask app and set up the static folder for React build
 app = Flask(__name__, static_folder='static/build', static_url_path='/')
 
-# Apply CORS to allow localhost:3000 and Heroku domain for main routes
+# Apply CORS to allow localhost:3000 and Heroku domain
 CORS(app, resources={r"/*": {"origins": ["https://salty-beach-40498-7894fddcd70e.herokuapp.com", "http://localhost:3000"]}})
 
 # Set up logging to log errors for better debugging
 logging.basicConfig(level=logging.INFO)
 
-# Serve React App
+# Serve React App (from build folder)
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
@@ -32,7 +32,7 @@ def get_recipes():
     if request.method == 'OPTIONS':
         # Handle preflight CORS request
         response = make_response()
-        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type"
         return response, 200
