@@ -8,8 +8,8 @@ from io import BytesIO
 # Initialize the Flask app and set up the static folder for React build
 app = Flask(__name__, static_folder='static', static_url_path='/')
 
-# Apply CORS to allow localhost:3000 and Heroku domain
-CORS(app, resources={r"/*": {"origins": ["https://salty-beach-40498-7894fddcd70e.herokuapp.com", "http://localhost:3000"]}})
+# Apply CORS to allow all domains during development, limit to specific domains in production
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Set up logging to log errors for better debugging
 logging.basicConfig(level=logging.INFO)
